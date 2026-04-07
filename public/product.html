@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://kit.fontawesome.com/1147679ae7.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="style.css" />
+    <title>Crazy Store - Products</title>
+</head>
+<body>
+    <header id="site-header">
+        <div class="logo">
+            <a href="index.html"><img src="images/logo.png" alt="Crazy Store logo" /></a>
+        </div>
+        <nav class="menu">
+            <ul>
+                <li><a href="index.html">HOME</a></li>
+                <li class="has-sub">
+                    <a href="product.html">PRODUCTS</a>
+                    <ul class="sub-menu">
+                        <li><a href="product.html#blind-box">Blind Box</a></li>
+                        <li><a href="product.html#figure">Figure</a></li>
+                        <li><a href="product.html#standee">Standee</a></li>
+                        <li><a href="product.html#card-pack">Pack</a></li>
+                        <li><a href="product.html#other">Other</a></li>
+                    </ul>
+                </li>
+                <li class="has-sub">
+                    <a href="#">ART</a> <ul class="sub-menu">
+                        <li><a href="art.html?type=official">Official Art</a></li>
+                        <li><a href="art.html?type=fanart">Fanart</a></li>
+                    </ul>
+                </li>
+                <li><a href="about.html">ABOUT</a></li>
+            </ul>
+        </nav>
+        <div class="others">
+            <ul>
+                <li><a class="fa fa-user" href="#"></a></li>
+                <li><a class="fa fa-heart" href="wishlist.html" aria-label="Wishlist"></a></li>
+                <li>
+                    <a class="fa fa-shopping-bag" href="#" id="cart-btn" style="position: relative;">
+                        <span id="cart-count" style="display:none; position:absolute; top:-5px; right:-8px; background:red; color:white; font-size:10px; padding:2px 5px; border-radius:50%;">0</span>
+                    </a>
+                </li>
+                <li class="currency has-sub">
+                    <a id="currency-display" href="#">USD</a>
+                    <ul class="sub-others">
+                        <li><a href="#" class="currency-option">USD</a></li>
+                        <li><a href="#" class="currency-option">VND</a></li>
+                    </ul>
+                </li>
+                <li class="mobile-toggle"><button id="mobile-btn">☰</button></li>
+            </ul>
+        </div>
+    </header>
+
+    <main id="content" style="margin-top:90px;">
+    </main>
+
+    <footer id="site-footer">
+        <p>© Crazy Store — All rights reserved</p>
+    </footer>
+
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <div class="cart-sidebar" id="cart-sidebar">
+        <div class="cart-header"><h3>Your Cart</h3><button id="close-cart">x</button></div>
+        <div class="cart-items" id="cart-items"></div>
+        <div class="cart-footer">
+            <div class="cart-total">Total: <span id="cart-total-price">$0.00</span></div>
+            <button class="btn checkout-btn">Checkout</button>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+    <script>
+        const header = document.getElementById('site-header');
+        window.addEventListener('scroll', () => {
+            header.classList.toggle('scrolled', window.scrollY > 50);
+        });
+        const mobileBtn = document.getElementById('mobile-btn');
+        const nav = document.querySelector('nav.menu');
+        if(mobileBtn) mobileBtn.addEventListener('click', () => nav.classList.toggle('open'));
+    </script>
+</body>
+</html>

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Profile</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://kit.fontawesome.com/1147679ae7.js" crossorigin="anonymous"></script>
+    <style>
+        /* CSS Profile */
+        .profile-container { max-width: 800px; margin: 120px auto; color: white; padding: 0 20px; }
+        .profile-row { 
+            background: #1e1f22; padding: 20px; border-radius: 12px; margin-bottom: 15px; 
+            display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;
+        }
+        .user-head { display: flex; align-items: center; gap: 20px; }
+        .user-avatar-lg { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #7c9cff; }
+        .btn-edit { background: transparent; border: 1px solid #7c9cff; color: #7c9cff; padding: 5px 15px; border-radius: 20px; cursor: pointer; transition: 0.3s; }
+        .btn-edit:hover { background: #7c9cff; color: white; }
+        
+        /* Modal Styles */
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; justify-content: center; align-items: center; }
+        .modal-content { background: #2f3542; padding: 30px; width: 400px; border-radius: 10px; position: relative; text-align: center; border: 1px solid #555; }
+        .close { position: absolute; right: 15px; top: 10px; cursor: pointer; font-size: 24px; color: #fff; }
+        .modal input { width: 100%; padding: 10px; margin: 10px 0; background: #111; border: 1px solid #555; color: white; border-radius: 5px; }
+        .btn-confirm { background: #7c9cff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; }
+        
+        .pt-gain { color: #2ecc71; font-weight: bold; }
+        .pt-use { color: #ff4757; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <header id="site-header">
+        <div class="logo"><a href="index.html"><img src="images/logo.png" alt="Logo"></a></div>
+        <nav class="menu"><ul><li><a href="index.html">HOME</a></li></ul></nav>
+    </header>
+
+    <div class="profile-container">
+        <div class="profile-row">
+            <div class="user-head">
+                <img id="p-avatar" src="images/default-avatar.png" class="user-avatar-lg" onerror="this.src='images/default-avatar.png'">
+                <div>
+                    <h2 id="p-username">Loading...</h2>
+                    <small style="color:#aaa">ID: <span id="p-id">...</span></small>
+                </div>
+            </div>
+            <button class="btn-edit" onclick="openModal('editBasicModal')">Edit Profile</button>
+        </div>
+
+        <div class="profile-row">
+            <div>
+                <h3>Reward Points</h3>
+                <p>Available: <span id="p-points" style="color: gold; font-size: 20px;">0</span> pts</p>
+            </div>
+            <button class="btn-edit" onclick="showHistory()">History</button>
+        </div>
+
+        <div class="profile-row">
+            <div>
+                <h3>Email</h3>
+                <p id="p-email">Loading...</p>
+            </div>
+            <button class="btn-edit" onclick="securityCheck('email')">Change</button>
+        </div>
+
+        <div class="profile-row">
+            <div>
+                <h3>Password</h3>
+                <p id="p-password">********</p>
+            </div>
+            <button class="btn-edit" onclick="securityCheck('password')">Change</button>
+        </div>
+    </div>
+
+    <div id="editBasicModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('editBasicModal')">&times;</span>
+            <h3>Edit Profile</h3>
+            <img id="preview-avatar" src="" style="width:80px; height:80px; border-radius:50%; margin:10px auto; display:block; object-fit:cover; border: 1px dashed #777;">
+            <input type="file" id="file-input" onchange="previewImg()" accept="image/*">
+            <input type="text" id="new-username" placeholder="New Username">
+            <div id="user-msg" style="height:20px; font-size:12px;"></div>
+            <button class="btn-confirm" onclick="saveBasic()">Save Changes</button>
+        </div>
+    </div>
+
+    <div id="passCheckModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('passCheckModal')">&times;</span>
+            <h3>Verify Identity</h3>
+            <p style="font-size: 14px; color: #ccc;">Please enter your current password</p>
+            <input type="password" id="verify-pass" placeholder="Current Password">
+            <p id="verify-err" style="color:red; display:none; margin-top:5px;">Incorrect Password</p>
+            <button class="btn-confirm" onclick="confirmPass()">Confirm</button>
+        </div>
+    </div>
+
+    <div id="emailModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('emailModal')">&times;</span>
+            <h3>Update Email</h3>
+            <input type="email" id="new-email" placeholder="New Email Address">
+            <button class="btn-confirm" onclick="saveSecurity('email')">Update</button>
+        </div>
+    </div>
+
+    <div id="passModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('passModal')">&times;</span>
+            <h3>Change Password</h3>
+            <input type="password" id="new-pass" placeholder="New Password">
+            <input type="password" id="confirm-pass" placeholder="Confirm Password">
+            <p id="pass-err" style="color:red; display:none; margin-top:5px;">Passwords do not match</p>
+            <button class="btn-confirm" onclick="saveSecurity('password')">Update</button>
+        </div>
+    </div>
+
+    <div id="historyModal" class="modal">
+        <div class="modal-content" style="width: 500px; text-align: left;">
+            <span class="close" onclick="closeModal('historyModal')">&times;</span>
+            <h3>Points History</h3>
+            <div id="history-list" style="max-height: 300px; overflow-y: auto; margin-top: 15px; border-top: 1px solid #444;"></div>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+    <script>
+        // === LOGIC JS QUAN TRỌNG ĐỂ LẤY DỮ LIỆU ===
+        
+        let localUser = JSON.parse(localStorage.getItem('crazy_user'));
+        let pendingAction = ''; 
+
+        // 1. Hàm Load Profile từ Database
+        async function loadProfileData() {
+            if (!localUser) {
+                alert("Please login first!");
+                window.location.href = "login.html";
+                return;
+            }
+
+            // Lấy ID chuẩn (vì có lúc lưu id, có lúc lưu _id)
+            const userId = localUser.id || localUser._id;
+            console.log("Current User ID: ", userId);
+
+            try {
+                // Gọi API lấy thông tin
+                const res = await fetch(`/api/user/${userId}`);
+                if (!res.ok) throw new Error("Failed to fetch user data");
+                
+                const data = await res.json();
+                
+                // --- ĐIỀN DỮ LIỆU VÀO HTML ---
+                
+                // Avatar (có fallback nếu ảnh lỗi)
+                const avatarSrc = data.avatar ? data.avatar : 'images/default-avatar.png';
+                document.getElementById('p-avatar').src = avatarSrc;
+                
+                // Username & ID
+                document.getElementById('p-username').innerText = data.username;
+                document.getElementById('p-id').innerText = data._id;
+                
+                // Points
+                document.getElementById('p-points').innerText = data.rewardPoints || 0;
+                
+                // Mask Email (ẩn bớt ký tự)
+                const [name, domain] = data.email.split('@');
+                const maskedEmail = name.length > 2 
+                    ? `${name[0]}***${name.slice(-1)}@${domain}`
+                    : data.email;
+                document.getElementById('p-email').innerText = maskedEmail;
+                
+                // Lưu lịch sử điểm để dùng cho Modal History
+                window.pointHistory = data.pointHistory || [];
+                
+            } catch (err) {
+                console.error("Error loading profile:", err);
+                alert("Error loading profile data. Please login again.");
+            }
+        }
+
+        // Chạy hàm load ngay lập tức
+        loadProfileData();
+
+        // === CÁC HÀM HỖ TRỢ MODAL (GIỮ NGUYÊN) ===
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function previewImg() {
+            const file = document.getElementById('file-input').files[0];
+            if(file) document.getElementById('preview-avatar').src = URL.createObjectURL(file);
+        }
+
+        async function saveBasic() {
+            const formData = new FormData();
+            const username = document.getElementById('new-username').value;
+            const file = document.getElementById('file-input').files[0];
+            const userId = localUser.id || localUser._id;
+
+            if(username) formData.append('username', username);
+            if(file) formData.append('avatar', file);
+
+            try {
+                const res = await fetch(`/api/user/basic/${userId}`, { method: 'PUT', body: formData });
+                const data = await res.json();
+                
+                if(res.ok) {
+                    // Cập nhật localStorage
+                    localStorage.setItem('crazy_user', JSON.stringify({ ...localUser, ...data.user, id: data.user._id }));
+                    alert("Updated successfully!");
+                    location.reload();
+                } else {
+                    const msgDiv = document.getElementById('user-msg');
+                    msgDiv.innerText = data.error;
+                    msgDiv.style.color = 'red';
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function securityCheck(action) {
+            pendingAction = action;
+            openModal('passCheckModal');
+        }
+
+        // ... trong thẻ <script> ...
+
+async function confirmPass() {
+    // 1. Trim() để cắt khoảng trắng thừa nếu lỡ tay bấm Space
+    const pass = document.getElementById('verify-pass').value.trim();
+    
+    // 2. Lấy ID chuẩn nhất
+    const userId = localUser.id || localUser._id;
+
+    if (!pass) {
+        alert("Please enter your password!");
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/user/verify-password', {
+            method: 'POST', 
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ userId: userId, password: pass })
+        });
+        
+        const data = await res.json();
+        
+        if(data.valid) {
+            // Ẩn thông báo lỗi nếu đúng
+            document.getElementById('verify-err').style.display = 'none';
+            closeModal('passCheckModal');
+            
+            // Mở hộp thoại tiếp theo
+            if(pendingAction === 'email') openModal('emailModal');
+            if(pendingAction === 'password') openModal('passModal');
+        } else {
+            // Hiện thông báo lỗi nếu sai
+            const errDiv = document.getElementById('verify-err');
+            errDiv.style.display = 'block';
+            errDiv.innerText = "Incorrect Password"; // Hoặc hiển thị data.error để debug
+        }
+    } catch (err) {
+        console.error("Lỗi gọi API:", err);
+    }
+}
+
+        async function saveSecurity(type) {
+            const payload = {};
+            const userId = localUser.id || localUser._id;
+
+            if(type === 'email') payload.email = document.getElementById('new-email').value;
+            if(type === 'password') {
+                const p1 = document.getElementById('new-pass').value;
+                const p2 = document.getElementById('confirm-pass').value;
+                if(p1 !== p2) return document.getElementById('pass-err').style.display = 'block';
+                payload.password = p1;
+            }
+
+            const res = await fetch(`/api/user/security/${userId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            
+            if(res.ok) { alert('Updated Successfully!'); location.reload(); }
+        }
+
+        function showHistory() {
+            const list = document.getElementById('history-list');
+            if(!window.pointHistory || window.pointHistory.length === 0) {
+                list.innerHTML = "<p style='padding:10px; color:#aaa;'>No history yet.</p>";
+            } else {
+                list.innerHTML = window.pointHistory.map(h => `
+                    <div style="border-bottom:1px solid #444; padding:10px; display:flex; justify-content:space-between; align-items:center;">
+                        <div style="text-align:left;">
+                            <div style="font-weight:bold; color:white;">${h.description || 'Unknown Activity'}</div>
+                            <small style="color:#888">${new Date(h.date).toLocaleString()}</small>
+                        </div>
+                        <div class="${h.action === 'gain' ? 'pt-gain' : 'pt-use'}">
+                            ${h.action === 'gain' ? '+' : '-'}${h.amount}
+                        </div>
+                    </div>
+                `).reverse().join('');
+            }
+            openModal('historyModal');
+        }
+    </script>
+</body>
+</html>
