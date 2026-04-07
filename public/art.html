@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Art Gallery - Crazy Store</title>
+    <script src="https://kit.fontawesome.com/1147679ae7.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .art-header { text-align: center; margin: 40px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px; }
+        .art-header h2 { color: var(--accent); font-size: 32px; letter-spacing: 2px; }
+        
+        .art-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; padding: 20px; }
+        
+        .art-card { background: var(--panel); border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s; position: relative; }
+        .art-card:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.5); border-color: var(--accent); }
+        
+        .art-img-container { height: 350px; overflow: hidden; cursor: pointer; }
+        .art-img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
+        .art-card:hover .art-img { transform: scale(1.1); }
+        
+        .art-info { padding: 20px; }
+        .art-title { font-size: 18px; font-weight: bold; margin-bottom: 8px; color: white; }
+        .art-meta { font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .art-desc { font-size: 14px; color: #aaa; margin-bottom: 20px; line-height: 1.5; }
+        
+        .btn-download { display: block; width: 100%; background: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; text-align: center; transition: 0.3s; }
+        .btn-download:hover { background: white; color: var(--bg); }
+
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); }
+    </style>
+</head>
+<body>
+    <header id="site-header">
+        <div class="logo"><a href="index.html"><img src="images/logo.png" alt="Logo"></a></div>
+        <nav class="menu">
+            <ul>
+                <li><a href="index.html">HOME</a></li>
+                <li class="has-sub">
+                    <a href="product.html">PRODUCTS</a>
+                    <ul class="sub-menu">
+                        </ul>
+                </li>
+                <li class="has-sub">
+                    <a href="#" style="color: var(--accent);">ART</a>
+                    <ul class="sub-menu">
+                        <li><a href="art.html?type=official">Official Art</a></li>
+                        <li><a href="art.html?type=fanart">Fanart</a></li>
+                    </ul>
+                </li>
+                <li><a href="about.html">ABOUT</a></li>
+            </ul>
+        </nav>
+        <div class="others">
+            <ul>
+                <li><a class="fa fa-user" href="login.html"></a></li>
+                <li><a class="fa fa-heart" href="wishlist.html"></a></li>
+                <li><a class="fa fa-shopping-bag" href="#" id="cart-btn"><span id="cart-count" style="display:none;">0</span></a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main id="content" style="margin-top: 100px; max-width: 1200px; margin-left: auto; margin-right: auto;">
+        <div class="art-header">
+            <h2 id="page-title">GALLERY</h2>
+        </div>
+
+        <div class="art-grid" id="art-grid">
+            <p style="text-align:center; color:#666;">Loading masterpieces...</p>
+        </div>
+    </main>
+
+    <div id="imgPreviewModal" class="modal" onclick="this.style.display='none'">
+        <span style="position:absolute; top:30px; right:40px; font-size:50px; color:white; cursor:pointer;">&times;</span>
+        <img id="full-image" style="display: block; margin: 80px auto; max-width: 90%; max-height: 85%; border-radius: 4px; box-shadow: 0 0 50px rgba(255,255,255,0.1);">
+    </div>
+
+    <script src="main.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const artType = urlParams.get('type') || 'official';
+        
+        document.getElementById('page-title').innerText = artType === 'official' ? 'OFFICIAL ART GALLERY' : 'FANART COMMUNITY';
+
+        async function loadArts() {
+            const container = document.getElementById('art-grid');
+            try {
+                const arts = await fetchJSON(`/api/art?type=${artType}`);
+                
+                if (arts.length === 0) {
+                    container.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #666;">Coming soon...</p>`;
+                    return;
+                }
+
+                container.innerHTML = arts.map(art => {
+                    const date = new Date(art.createdAt).toLocaleDateString();
+                    return `
+                        <div class="art-card">
+                            <div class="art-img-container" onclick="viewImage('${art.image_url}')">
+                                <img src="${art.image_url}" class="art-img" alt="${art.title}">
+                            </div>
+                            <div class="art-info">
+                                <div class="art-title">${art.title}</div>
+                                <div class="art-meta">
+                                    <span><i class="fa fa-user-circle"></i> ${art.author}</span>
+                                    <span>${date}</span>
+                                </div>
+                                <div class="art-actions">
+                                    <a href="${art.image_url}" download target="_blank" class="btn-download">
+                                        <i class="fa fa-download"></i> Download Wallpaper
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) { console.error(err); }
+        }
+
+        function viewImage(url) {
+            document.getElementById('full-image').src = url;
+            document.getElementById('imgPreviewModal').style.display = "block";
+        }
+
+        loadArts();
+    </script>
+</body>
+</html>

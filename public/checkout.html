@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - Crazy Store</title>
+    <script src="https://kit.fontawesome.com/1147679ae7.js" crossorigin="anonymous"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .checkout-container {
+            max-width: 800px; margin: 120px auto; padding: 20px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 40px;
+        }
+        .form-section { background: var(--panel); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: var(--muted); }
+        .form-group input { 
+            width: 100%; padding: 10px; background: rgba(255,255,255,0.05); 
+            border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 5px; 
+        }
+        
+        #payment-element { margin-top: 10px; margin-bottom: 20px; }
+        
+        #submit-btn {
+            width: 100%; padding: 14px; background: var(--accent); color: white; 
+            border: none; border-radius: 6px; font-weight: bold; cursor: pointer;
+            opacity: 0.5; pointer-events: none; 
+        }
+        #submit-btn.ready { opacity: 1; pointer-events: all; }
+        
+        .order-summary { color: var(--text); }
+        .order-row { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 10px; font-size: 14px;}
+        
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .summary-total { font-size: 20px; font-weight: bold; color: var(--accent); margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; }
+        .discount-text { color: #2ecc71; }
+
+        @media(max-width: 768px) { .checkout-container { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <header id="site-header">
+        <div class="logo"><a href="index.html"><img src="images/logo.png" alt="Logo"></a></div>
+        <nav class="menu"><ul><li><a href="index.html">Back to Home</a></li></ul></nav>
+    </header>
+
+    <div class="checkout-container">
+        <div class="form-section">
+            <h3>Shipping Information</h3>
+            <br>
+            <form id="payment-form">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="ship-name" required placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" id="ship-phone" required placeholder="0901234567">
+                </div>
+                <div class="form-group">
+                    <label>Address</label>
+                    <input type="text" id="ship-address" required placeholder="123 Street, City">
+                </div>
+
+                <h3>Payment Method</h3>
+                <div class="payment-methods" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; cursor: pointer;">
+                        <input type="radio" name="pay_method" value="stripe" checked onchange="togglePaymentMethod()">
+                        💳 Credit/Debit Card
+                    </label>
+                    <label style="display: block; margin-bottom: 10px; cursor: pointer;">
+                        <input type="radio" name="pay_method" value="zalopay" onchange="togglePaymentMethod()">
+                        <img src="https://zalopay.vn/images/zalopay.png" style="height: 16px; vertical-align: middle; margin-right: 5px;"> ZaloPay
+                    </label>
+                    <label style="display: block; margin-bottom: 10px; cursor: pointer;">
+                        <input type="radio" name="pay_method" value="cod" onchange="togglePaymentMethod()">
+                        🚚 Cash on Delivery (COD)
+                    </label>
+                </div>
+
+                <div id="stripe-container">
+                    <div id="payment-element"></div>
+                </div>
+                
+                <button id="submit-btn">Pay Now</button>
+                <div id="error-message" style="color: #ff4757; margin-top: 10px;"></div>
+            </form>
+        </div>
+
+        <div class="form-section order-summary">
+            <h3>Order Summary</h3>
+            <br>
+            <div id="checkout-items">Loading items...</div>
+            
+            <div style="margin-top: 20px;">
+                <div class="summary-row">
+                    <span>Subtotal:</span>
+                    <span id="summ-subtotal">$0.00</span>
+                </div>
+                <div class="summary-row discount-text">
+                    <span>Discount (<span id="summ-points">0</span> pts):</span>
+                    <span id="summ-discount">-$0.00</span>
+                </div>
+                <div class="summary-row summary-total">
+                    <span>Total:</span>
+                    <span id="summ-total">$0.00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+    <script>
+        const stripe = Stripe('pk_test_51SeuL5DdzmxfsrW2alkAkBbuyyVCuKSBDrdj7sM46tHQhFLh5Crh49BhgsLC9ob3I1fo81GDEUcHqzsq7CvqOngB00879Y5YKx'); 
+
+        let elements;
+        const pointsUsed = parseInt(localStorage.getItem('crazy_checkout_points')) || 0;
+
+        function formatCheckoutPrice(priceUSD) {
+            const currency = localStorage.getItem('crazy_currency') || 'USD';
+            if (currency === 'VND') {
+                return (Math.round(priceUSD * 25000)).toLocaleString('vi-VN') + ' ₫';
+            }
+            return '$' + parseFloat(priceUSD).toFixed(2);
+        }
+
+        async function initialize() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('error') === 'zalopay_cancelled') {
+                showMessage("You have cancelled payment with ZaloPay.");
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
+            const user = JSON.parse(localStorage.getItem('crazy_user'));
+            const itemsContainer = document.getElementById('checkout-items');
+            
+            let cart = [];
+
+            if (user) {
+                try {
+                    const res = await fetch(`/api/cart/${user.id}`);
+                    const dbItems = await res.json();
+                    cart = dbItems.map(item => ({
+                        id: item.product,
+                        name: item.name,
+                        price: item.price,
+                        img: item.image_url,
+                        quantity: item.quantity
+                    }));
+                } catch (err) { console.error("Lỗi tải giỏ hàng DB:", err); }
+            } else {
+                cart = JSON.parse(localStorage.getItem('crazy_cart')) || [];
+            }
+
+            if(cart.length === 0) {
+                alert("Your cart is empty!");
+                window.location.href = "index.html";
+                return;
+            }
+
+            let subtotal = 0;
+            itemsContainer.innerHTML = cart.map(item => {
+                const itemTotal = item.price * item.quantity;
+                subtotal += itemTotal;
+                return `
+                    <div class="order-row">
+                        <span>${item.quantity}x ${item.name}</span>
+                        <span>${formatCheckoutPrice(itemTotal)}</span>
+                    </div>`;
+            }).join('');
+
+            const discountAmount = pointsUsed * 0.04;
+            const finalTotal = Math.max(0, subtotal - discountAmount);
+
+            document.getElementById('summ-subtotal').innerText = formatCheckoutPrice(subtotal);
+            document.getElementById('summ-points').innerText = pointsUsed;
+            document.getElementById('summ-discount').innerText = `-${formatCheckoutPrice(discountAmount)}`;
+            document.getElementById('summ-total').innerText = formatCheckoutPrice(finalTotal);
+
+            if(!user) {
+                alert("Please login to complete checkout!");
+                window.location.href = "login.html";
+                return;
+            }
+
+            const response = await fetch("/api/create-payment-intent", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    userId: user.id,
+                    pointsUsed: pointsUsed 
+                }),
+            });
+            
+            if (!response.ok) {
+                const errData = await response.json();
+                showMessage(errData.error || "Failed to initialize payment.");
+                return;
+            }
+
+            const { clientSecret } = await response.json();
+
+            const appearance = { theme: 'night', labels: 'floating' };
+            elements = stripe.elements({ appearance, clientSecret });
+
+            const paymentElement = elements.create("payment");
+            paymentElement.mount("#payment-element");
+            
+            document.getElementById('submit-btn').classList.add('ready');
+            togglePaymentMethod();
+        }
+
+        document.getElementById("payment-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            setLoading(true);
+
+            const method = document.querySelector('input[name="pay_method"]:checked').value;
+
+            if (method === 'stripe') {
+                const { error, paymentIntent } = await stripe.confirmPayment({
+                    elements,
+                    confirmParams: { return_url: window.location.href },
+                    redirect: "if_required"
+                });
+
+                if (error) {
+                    showMessage(error.message);
+                    setLoading(false);
+                } else if (paymentIntent && paymentIntent.status === "succeeded") {
+                    await finalizeOrder(paymentIntent.id); 
+                }
+            } 
+            else if (method === 'cod') {
+                await finalizeAlternativeOrder('/api/orders/cod');
+            } 
+            else if (method === 'zalopay') {
+                await finalizeAlternativeOrder('/api/payment/zalopay');
+            }
+        });
+
+        async function finalizeOrder(paymentIntentId) {
+            const user = JSON.parse(localStorage.getItem('crazy_user'));
+            const shipName = document.getElementById('ship-name').value;
+            const shipPhone = document.getElementById('ship-phone').value;
+            const shipAddress = document.getElementById('ship-address').value;
+
+            const res = await fetch("/api/orders/finalize-stripe", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    paymentIntentId,
+                    userId: user.id,
+                    pointsUsed: pointsUsed, 
+                    shippingInfo: { name: shipName, phone: shipPhone, address: shipAddress }
+                })
+            });
+
+            const data = await res.json();
+            if(data.success) {
+                localStorage.removeItem('crazy_cart'); 
+                localStorage.removeItem('crazy_checkout_points');
+                
+                if (user.rewardPoints) {
+                    user.rewardPoints -= pointsUsed;
+                    localStorage.setItem('crazy_user', JSON.stringify(user));
+                }
+
+                alert("Order placed successfully! Thank you.");
+                window.location.href = "my-orders.html";
+            } else {
+                showMessage("Payment succeeded but failed to save order.");
+            }
+        }
+
+        function togglePaymentMethod() {
+            const method = document.querySelector('input[name="pay_method"]:checked').value;
+            const stripeContainer = document.getElementById('stripe-container');
+            const submitBtn = document.getElementById('submit-btn');
+
+            if (method === 'stripe') {
+                stripeContainer.style.display = 'block';
+                submitBtn.textContent = 'Pay Now';
+                if(elements) submitBtn.classList.add('ready'); 
+            } else if (method === 'zalopay') {
+                stripeContainer.style.display = 'none';
+                submitBtn.textContent = 'Pay with ZaloPay';
+                submitBtn.classList.add('ready');
+            } else if (method === 'cod') {
+                stripeContainer.style.display = 'none';
+                submitBtn.textContent = 'Place Order';
+                submitBtn.classList.add('ready');
+            }
+        }
+
+        function showMessage(messageText) {
+            const messageContainer = document.querySelector("#error-message");
+            messageContainer.textContent = messageText;
+            messageContainer.style.display = "block";
+        }
+        
+        function setLoading(isLoading) {
+            const btn = document.querySelector("#submit-btn");
+            if (isLoading) {
+                btn.disabled = true;
+                btn.textContent = "Processing...";
+            } else {
+                btn.disabled = false;
+                togglePaymentMethod(); 
+            }
+        }
+
+        async function finalizeAlternativeOrder(apiUrl) {
+            const user = JSON.parse(localStorage.getItem('crazy_user'));
+            const shipName = document.getElementById('ship-name').value;
+            const shipPhone = document.getElementById('ship-phone').value;
+            const shipAddress = document.getElementById('ship-address').value;
+
+            try {
+                const res = await fetch(apiUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        userId: user.id,
+                        pointsUsed: pointsUsed, 
+                        shippingInfo: { name: shipName, phone: shipPhone, address: shipAddress }
+                    })
+                });
+
+                const data = await res.json();
+                if(data.success) {
+                    
+                    if (data.order_url) {
+                        window.location.href = data.order_url;
+                    } else {
+                        localStorage.removeItem('crazy_cart'); 
+                        localStorage.removeItem('crazy_checkout_points');
+                        
+                        if (user.rewardPoints) {
+                            user.rewardPoints -= pointsUsed;
+                            localStorage.setItem('crazy_user', JSON.stringify(user));
+                        }
+                        
+                        alert("Order placed successfully!");
+                        window.location.href = "my-orders.html";
+                    }
+                } else {
+                    showMessage(data.error || "Order failed.");
+                    setLoading(false);
+                }
+            } catch (err) {
+                showMessage("Server connection error.");
+                setLoading(false);
+            }
+        }
+
+        initialize();
+    </script>
+</body>
+</html>

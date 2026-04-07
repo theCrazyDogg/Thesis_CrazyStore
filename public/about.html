@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>About - Crazy Store</title>
+    <script src="https://kit.fontawesome.com/1147679ae7.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .about-container { max-width: 900px; margin: 120px auto; padding: 20px; color: var(--text); }
+        .about-section { background: var(--panel); padding: 30px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 30px; }
+        .about-section h2 { color: var(--accent); margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        .about-content p { line-height: 1.8; margin-bottom: 15px; color: #ccc; text-align: justify; }
+        .contact-info { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px; }
+        .contact-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; flex: 1; min-width: 180px; text-align: center; }
+        .contact-item i { font-size: 24px; color: var(--accent); margin-bottom: 10px; display: block; transition: 0.3s; }
+        a.contact-item { text-decoration: none; color: var(--text); transition: 0.3s; display: block; }
+        a.contact-item:hover { background: var(--accent); transform: translateY(-5px); box-shadow: 0 5px 15px rgba(124, 156, 255, 0.4); }
+        a.contact-item:hover i, a.contact-item:hover h3 { color: white; }
+    </style>
+</head>
+<body>
+    <header id="site-header">
+        <div class="logo"><a href="index.html"><img src="images/logo.png" alt="Logo"></a></div>
+        <nav class="menu">
+            <ul>
+                <li><a href="index.html">HOME</a></li>
+                <li class="has-sub">
+                    <a href="product.html">PRODUCTS</a>
+                    <ul class="sub-menu">
+                        </ul>
+                </li>
+                <li class="has-sub">
+                    <a href="#">ART</a>
+                    <ul class="sub-menu">
+                        <li><a href="art.html?type=official">Official Art</a></li>
+                        <li><a href="art.html?type=fanart">Fanart</a></li>
+                    </ul>
+                </li>
+                <li><a href="about.html" style="color: var(--accent);">ABOUT</a></li>
+            </ul>
+        </nav>
+        <div class="others">
+            <ul>
+                <li><a class="fa fa-user" href="login.html"></a></li>
+                <li><a class="fa fa-heart" href="wishlist.html"></a></li>
+                <li><a class="fa fa-shopping-bag" href="#" id="cart-btn"><span id="cart-count" style="display:none;">0</span></a></li>
+            </ul>
+        </div>
+    </header>
+
+    <div class="about-container">
+        <div class="about-section">
+            <h2>About Honkai: Star Rail</h2>
+            <div class="about-content">
+                <p><strong>Honkai: Star Rail</strong> is a 2023 free-to-play role-playing gacha video game developed and published by miHoYo (with publishing outside mainland China under Cognosphere, d/b/a HoYoverse). It is the fourth installment in the Honkai series, utilizing some characters from Honkai Impact 3rd and some gameplay elements from Genshin Impact.</p> 
+                <p>The game features the main character, who is referred to as the Trailblazer, traveling across the universe through the Astral Express to help and connect the worlds while involved in resolving disasters caused by "Stellarons" and other third parties.</p>
+                <p>The first closed beta test was launched on October 27, 2021. It was publicly released internationally on April 26, 2023 for Windows and mobile devices. Additionally, the PlayStation 5 port was released on October 11, 2023. The PlayStation 4 version is still yet to be announced, as revealed at the 2023 Summer Game Fest with a trailer.</p>
+                <p>Partially due to the popularity of Genshin Impact, the game was widely anticipated before its launch. It was nominated for the Most Wanted Game Award at the Golden Joystick Awards in 2022, and won the Best Mobile Game Award in the Game Awards 2023.</p>
+            </div>
+        </div>
+
+        <div class="about-section">
+            <h2>Official Links</h2>
+            <div class="contact-info">
+                <a href="https://hsr.hoyoverse.com/pcbranding?utm_source=SNS&utm_medium=Facebook&utm_campaign=VN_BIO&is_retargeting=true&c=VN_BIO&pid=CM_Facebook_VN&af_adset=SNSBIO&af_reengagement_window=lifetime" target="_blank" class="contact-item">
+                    <h3>Official Site</h3>
+                </a>
+                <a href="https://x.com/honkaistarrail" target="_blank" class="contact-item">
+                    <h3>X-Twitter</h3>
+                </a>
+                <a href="https://www.facebook.com/HonkaiStarRail.VN/?brand_redir=105900255098575" target="_blank" class="contact-item">
+                    <h3>Facebook</h3>
+                </a>
+                <a href="https://www.playstation.com/en-vn/games/honkai-star-rail/" target="_blank" class="contact-item">
+                    <h3>Download Game</h3>
+                </a>
+            </div>
+        </div>
+
+        <div class="about-section">
+            <h2>Contact Admin</h2>
+            <p>If you have any questions or need support, feel free to contact us:</p>
+            <div class="contact-info">
+                <div class="contact-item">
+                    <i class="fa fa-phone"></i>
+                    <h3>Phone</h3>
+                    <p>0987 654 321</p>
+                </div>
+                <div class="contact-item">
+                    <i class="fa fa-envelope"></i>
+                    <h3>Email</h3>
+                    <p>admin@crazystore.com</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>
